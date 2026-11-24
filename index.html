@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f7f5f0"><title>雙人全方位價值觀測驗</title>
+<style>
+:root{--ink:#242a30;--muted:#687078;--paper:#f7f5f0;--card:#fff;--line:#e7e3dc;--accent:#496b62;--soft:#eaf0ec;--gold:#b17b3b}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.65 system-ui,-apple-system,"Noto Sans TC",sans-serif}
+header{padding:42px 20px 28px;text-align:center;background:#e9eee9}header .eyebrow{letter-spacing:.16em;font-size:12px;color:var(--accent);font-weight:700}h1{font-size:clamp(25px,5vw,38px);line-height:1.25;margin:12px 0}header p{margin:8px auto;max-width:620px;color:#59635e}
+main{max-width:850px;margin:24px auto;padding:0 16px 70px}.panel,.question,.result-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;margin:14px 0;box-shadow:0 4px 16px #30291a08}
+.tabs{display:flex;gap:8px}.tab,button{border:1px solid var(--line);border-radius:10px;padding:10px 15px;background:white;color:var(--ink);font:inherit;cursor:pointer}.tab.active,button.primary{background:var(--accent);color:white;border-color:var(--accent)}button:disabled{opacity:.4;cursor:not-allowed}
+.topline{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}.muted,.hint{color:var(--muted);font-size:14px}.progress{height:8px;background:#eeece6;border-radius:9px;overflow:hidden;margin:12px 0}.progress span{display:block;height:100%;background:var(--accent);width:0;transition:width .2s}
+h2{font-size:20px;margin:0 0 5px}h3{font-size:17px;margin:0 0 12px}.qnum{font-size:12px;color:var(--gold);font-weight:700;letter-spacing:.08em}.question p{margin:6px 0 14px;font-size:17px}
+.scale{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}.scale label{border:1px solid var(--line);border-radius:10px;padding:9px 3px;text-align:center;cursor:pointer;font-size:13px}.scale input{display:block;margin:0 auto 4px;accent-color:var(--accent)}.scale label:has(input:checked){background:var(--soft);border-color:var(--accent);font-weight:700}
+.actions{display:flex;gap:9px;flex-wrap:wrap;justify-content:space-between;margin:18px 0}.actions .right{display:flex;gap:8px}
+textarea{width:100%;min-height:75px;border:1px solid var(--line);border-radius:10px;padding:10px;font:13px monospace;resize:vertical}.codebox{display:grid;gap:8px;margin-top:12px}
+.hidden{display:none!important}.score{font-size:34px;font-weight:750;color:var(--accent)}.bar{height:9px;background:#eee;border-radius:8px;overflow:hidden}.bar span{display:block;height:100%;background:var(--accent)}
+.category-row{display:grid;grid-template-columns:minmax(110px,1fr) 2fr 48px;gap:12px;align-items:center;margin:10px 0;font-size:14px}
+.tag{display:inline-block;background:var(--soft);color:var(--accent);border-radius:30px;padding:3px 10px;font-size:12px;margin:3px}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
+@media(max-width:540px){.question{padding:16px}.scale{gap:4px}.scale label{font-size:11px;padding:8px 1px}.category-row{grid-template-columns:105px 1fr 38px;gap:7px}}
+</style></head>
+<body>
+<header><div class="eyebrow">TWO-PERSON VALUE CHECK</div><h1>雙人全方位價值觀測驗</h1><p>用 75 個問題，看看你們如何理解生活、關係與選擇。各自獨立作答，再把答案放在一起比較。</p></header>
+<main>
+<section class="panel">
+ <div class="topline"><div><h2>先選擇填答者</h2><div class="muted">每位填答者的進度會分開保留在目前裝置。</div></div><span class="tag">15 面向・75 題</span></div>
+ <div class="tabs" style="margin-top:14px"><button class="tab active" id="tabA" onclick="switchPerson('A')">填答者 A</button><button class="tab" id="tabB" onclick="switchPerson('B')">填答者 B</button></div>
+ <div class="topline" style="margin-top:16px"><strong id="personTitle">填答者 A</strong><span class="muted" id="progressText">已回答 0 / 75 題</span></div>
+ <div class="progress"><span id="progressBar"></span></div>
+</section>
+<section class="panel">
+ <div class="topline"><div><h2 id="sectionTitle">人生觀</h2><div class="muted" id="sectionCount">面向 1 / 15</div></div><span class="tag" id="sectionDone">0 / 5 已回答</span></div>
+ <div id="questions"></div>
+ <div class="actions"><button id="prev" onclick="move(-1)">上一個面向</button><div class="right"><button id="next" class="primary" onclick="move(1)">下一個面向</button></div></div>
+</section>
+<section class="panel">
+ <h2>答案代碼與結果分析</h2>
+ <p class="muted">完成後產生個人答案代碼。兩人可以在不同裝置作答，再互相交換代碼並匯入 A、B 欄位。</p>
+ <div class="codebox"><button class="primary" onclick="makeCode()">產生目前填答者的答案代碼</button><textarea id="myCode" placeholder="答案代碼會顯示在這裡，可複製傳給另一位填答者"></textarea><button onclick="copyCode()">複製答案代碼</button></div>
+ <div class="codebox"><label for="importCode"><strong>匯入對方或自己的答案代碼</strong></label><textarea id="importCode" placeholder="貼上 VT1: 開頭的答案代碼"></textarea><div class="actions"><button onclick="importCode()">匯入至目前選取的填答者</button><button class="primary" onclick="analyze()">比較 A 與 B</button></div></div>
+ <div id="results" class="hidden"></div>
+</section>
+<footer>本測驗為自我探索與溝通工具，並非經科學驗證的心理測量。沒有標準答案，也不以分數判定關係好壞。</footer>
+</main>
+<script>
+const groups = [
+['人生觀',['人生的價值主要來自自己認為有意義的事，而非外界的肯定。','比起穩定，我更願意為了理想承擔一些不確定性。','人生不同階段應該有不同目標，不必一直追求同一種成功。','我認為個人的選擇應該由自己負責，不該過度歸咎環境。','即使生活不如預期，也應該努力從中找到值得珍惜的部分。']],
+['金錢觀',['收入應優先用來提升生活品質，而非一味存錢。','重大消費前，我會先評估長期財務影響。','伴侶或家人之間，金錢往來應該有清楚界線。','我願意為喜歡的體驗或興趣花較多的錢。','即使收入差距很大，親密關係中的財務安排也應追求公平。']],
+['道德與是非觀',['只要沒有傷害別人，個人有權選擇自己的生活方式。','即使結果有利，只要手段不誠實就不能接受。','面對灰色地帶時，應該考慮情境，而非只看規則。','我認為承諾一旦做出，就應盡力遵守。','即使對方是親近的人，做錯事也應該承認並承擔責任。']],
+['社會與公平觀',['社會應該優先照顧資源較少、處境較弱勢的人。','努力與能力應該是分配機會和報酬的重要依據。','每個人都應有表達不同意見的空間，即使我不認同。','制度應盡可能提供平等的起點，而非保證相同結果。','遇到不公平的事情時，即使與自己無關，我也會在意。']],
+['家庭觀',['成年後仍應把家人的需求放在重要位置。','家庭成員之間也需要尊重彼此的隱私與界線。','結婚或建立家庭不代表一定要符合傳統角色分工。','照顧父母的責任應由家庭成員共同討論與分擔。','即使家人不認同我的選擇，我仍會堅持自己的人生方向。']],
+['友情與人際觀',['真正的朋友即使很久沒聯絡，關係也能維持。','朋友遇到困難時，我認為應該主動提供實際協助。','我可以接受朋友和自己的價值觀有很大差異。','人際關係需要雙方主動經營，不能總由同一方付出。','比起認識很多人，我更重視少數深入且穩定的關係。']],
+['工作與事業觀',['工作除了收入，也應該帶來成就感或成長。','為了職涯發展，我可以接受一段時間較忙碌的生活。','工作與私人生活應該有明確界線。','我重視工作的穩定性，勝過快速升遷或高風險機會。','如果工作長期違背自己的價值觀，我會考慮離開。']],
+['生活方式與享樂觀',['生活應保留足夠時間給興趣、休息與娛樂。','我喜歡有計畫的生活，不太喜歡臨時改變安排。','偶爾花錢享受當下，是值得的生活投資。','我願意為了體驗新事物而改變原本的生活習慣。','日常生活的舒適與規律，比追求刺激更重要。']],
+['自由與個人界線',['親密的人也不需要知道我所有的事情。','每個人都應該保有獨處與自主安排時間的權利。','即使是重要關係，我也不接受對方限制我的交友或興趣。','我認為界線應該清楚說出來，而不是期待對方自己猜。','為了維持關係，有些個人自由可以適度調整。']],
+['情緒與衝突處理',['發生衝突時，我傾向先冷靜，再討論問題。','即使意見不同，也應該避免用羞辱或攻擊的方式溝通。','我希望對方能主動察覺我的情緒與需求。','爭執時應該聚焦當下問題，不翻舊帳。','如果自己有錯，我願意主動道歉並修正。']],
+['學習與成長觀',['人應該持續學習，即使已經熟悉自己的工作或生活。','我願意承認自己原本的想法可能有錯。','失敗是累積經驗的一部分，不應因此停止嘗試。','我重視接觸不同背景與觀點的人。','成長應該由自己定義，不必和別人的進度比較。']],
+['科技與環境觀',['科技進步應以改善人的生活為主要目的。','即使不方便，我也願意為環境永續調整消費習慣。','使用科技產品時，個人隱私應優先受到保障。','便利性不應成為忽視環境成本的理由。','面對新科技，我傾向先了解風險再決定是否使用。']],
+['風險與安全觀',['做重大決定前，我會優先確保最壞情況仍可承受。','有些值得追求的機會，即使風險高也應該嘗試。','我偏好可預測、穩定的生活安排。','面對不確定性時，我會蒐集資訊後再採取行動。','為了安全感而放棄部分機會，是可以接受的選擇。']],
+['愛情與親密關係觀',['伴侶應該是生活中的重要夥伴，但不必成為彼此的全部。','感情中即使相愛，也需要持續溝通彼此的期待。','我認為忠誠不只是不出軌，也包含誠實與尊重界線。','伴侶應該支持彼此的個人目標與職涯發展。','長期關係需要共同價值觀，不能只靠感覺維持。']],
+['生命與幸福觀',['幸福主要來自內在滿足，而非擁有多少物質。','我希望人生留下值得回憶的經歷，而不只是完成責任。','健康與心理安定應該優先於外在成就。','人生有限，因此我不想長期把重要的事延後。','我認為幸福可以有很多種形式，不需要符合社會期待。']]
+];
+const data={A:Array(75).fill(0),B:Array(75).fill(0)};
+let person='A',section=0;
+const $=id=>document.getElementById(id);
+function render(){
+ $('tabA').classList.toggle('active',person==='A');$('tabB').classList.toggle('active',person==='B');
+ $('personTitle').textContent='填答者 '+person;
+ const answered=data[person].filter(x=>x>0).length;$('progressText').textContent='已回答 '+answered+' / 75 題';$('progressBar').style.width=(answered/75*100)+'%';
+ $('sectionTitle').textContent=groups[section][0];$('sectionCount').textContent='面向 '+(section+1)+' / 15';
+ const vals=data[person].slice(section*5,section*5+5);$('sectionDone').textContent=vals.filter(x=>x>0).length+' / 5 已回答';
+ $('questions').innerHTML=groups[section][1].map((q,i)=>{let n=section*5+i;return '<article class="question"><div class="qnum">QUESTION '+String(n+1).padStart(2,'0')+'</div><p>'+q+'</p><div class="scale">'+[1,2,3,4,5].map(v=>'<label><input type="radio" name="q'+n+'" value="'+v+'" '+(data[person][n]===v?'checked':'')+' onchange="setAnswer('+n+','+v+')">'+v+'<br>'+(['','非常不同意','不同意','中立','同意','非常同意'][v])+'</label>').join('')+'</div></article>'}).join('');
+ $('prev').disabled=section===0;$('next').textContent=section===14?'回到第一個面向':'下一個面向';
+}
+function switchPerson(p){person=p;render()}
+function setAnswer(i,v){data[person][i]=v;render()}
+function move(d){section=(section+d+15)%15;render();window.scrollTo({top:260,behavior:'smooth'})}
+function makeCode(){const a=data[person];if(a.every(x=>!x)){alert('目前尚未作答。');return}const code='VT1:'+a.map(x=>x||0).join('');$('myCode').value=code}
+async function copyCode(){if(!$('myCode').value)makeCode();if(!$('myCode').value)return;try{await navigator.clipboard.writeText($('myCode').value);alert('答案代碼已複製。')}catch(e){$('myCode').select();document.execCommand('copy');alert('答案代碼已複製。')}}
+function importCode(){const s=$('importCode').value.trim().replace(/\s/g,'');if(!/^VT1:[0-5]{75}$/.test(s)){alert('格式不正確，請確認代碼以 VT1: 開頭，且後面有 75 個 0 至 5 的數字。');return}data[person]=s.slice(4).split('').map(Number);render();alert('已匯入填答者 '+person+' 的答案。')}
+function analyze(){
+ if(data.A.some(x=>!x)||data.B.some(x=>!x)){const missingA=data.A.filter(x=>!x).length,missingB=data.B.filter(x=>!x).length;alert('兩人都需要完成 75 題才能比較。A 尚缺 '+missingA+' 題，B 尚缺 '+missingB+' 題。');return}
+ const sim=(a,b)=>Math.round(a.reduce((s,x,i)=>s+(4-Math.abs(x-b[i]))/4*100,0)/a.length);
+ const overall=sim(data.A,data.B),scores=groups.map((g,i)=>({name:g[0],score:sim(data.A.slice(i*5,i*5+5),data.B.slice(i*5,i*5+5)),diff:data.A.slice(i*5,i*5+5).reduce((s,x,j)=>s+Math.abs(x-data.B[i*5+j]),0)}));
+ const sorted=[...scores].sort((a,b)=>b.score-a.score),low=[...scores].sort((a,b)=>a.score-b.score);
+ const labels=['','非常不同意','不同意','中立','同意','非常同意'];
+ let html='<div class="result-card"><div class="muted">整體價值觀相似度</div><div class="score">'+overall+'%</div><div class="bar"><span style="width:'+overall+'%"></span></div><p class="muted">以每題兩人答案差距換算：相同 100%、差 1 分 75%、差 2 分 50%、差 3 分 25%、差 4 分 0%，再取平均。</p></div>';
+ html+='<div class="result-card"><h3>15 個面向比較</h3>'+scores.map(x=>'<div class="category-row"><span>'+x.name+'</span><div class="bar"><span style="width:'+x.score+'%"></span></div><strong>'+x.score+'%</strong></div>').join('')+'</div>';
+ html+='<div class="result-card"><h3>你們較接近的面向</h3>'+sorted.slice(0,3).map(x=>'<span class="tag">'+x.name+' '+x.score+'%</span>').join('')+'<p class="muted">這些面向的答案較一致，可以作為你們共同價值觀的起點。</p></div>';
+ html+='<div class="result-card"><h3>值得深入聊聊的面向</h3>'+low.slice(0,3).map(x=>'<span class="tag">'+x.name+' '+x.score+'%</span>').join('')+'<p class="muted">分數較低代表看法差異較大，建議回頭看具體題目，釐清差異背後的原因與可接受範圍。</p></div>';
+ const gaps=groups.flatMap((g,i)=>g[1].map((q,j)=>({q,a:data.A[i*5+j],b:data.B[i*5+j],gap:Math.abs(data.A[i*5+j]-data.B[i*5+j]),group:g[0]}))).sort((a,b)=>b.gap-a.gap).filter(x=>x.gap>=2).slice(0,8);
+ html+='<div class="result-card"><h3>答案差異較大的題目</h3>'+(gaps.length?gaps.map(x=>'<p><strong>'+x.group+'</strong>｜'+x.q+'<br><span class="muted">A：'+x.a+'（'+labels[x.a]+'）　B：'+x.b+'（'+labels[x.b]+'）</span></p>').join(''):'目前沒有差距達 2 分的題目。')+'</div>';
+ html+='<p class="hint">解讀提醒：相似度是答案一致程度的簡化指標，不能直接代表感情適配度。差異也不一定是問題，關鍵在於能否理解彼此、協調生活中的實際選擇。</p>';
+ $('results').innerHTML=html;$('results').classList.remove('hidden');$('results').scrollIntoView({behavior:'smooth'});
+}
+render();
+</script></body></html>
